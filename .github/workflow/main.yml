@@ -4,14 +4,18 @@ on:
   push:
     branches:
       - main
+      - '*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: seu-usuario-docker/seu-repo
-      IMAGE_TAG: ${{ github.sha }}
+      IMAGE_NAME: gaabs16/fastapi-weather
+      IMAGE_TAG: 1.0.${{ github.run_id }}
 
     steps:
     - name: Checkout repo
