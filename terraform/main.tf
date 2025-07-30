@@ -12,6 +12,15 @@ module "vpc" {
   enable_nat_gateway = true
   single_nat_gateway = true
 
+  public_subnet_tags = {
+    "kubernetes.io/role/elb"                     = "1"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  }
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb"            = "1"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  }
+
   tags = {
     Name = "eks-vpc"
   }
@@ -22,14 +31,16 @@ module "eks" {
   version = "21.0.5"
 
   name            = var.cluster_name
-  cluster_version = "1.29"
+  kubernetes_version = "1.33"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
+  # cluster_endpoint_private_access = true
+
   eks_managed_node_groups = {
     default = {
-      instance_types = ["t3.small"]
+      instance_types = ["t3.medium"]
       min_size       = 1
       max_size       = 2
       desired_size   = 1
