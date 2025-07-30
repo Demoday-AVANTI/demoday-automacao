@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia o restante do código
 COPY . .
 
-# Expõe a porta (opcional, mas ajuda na documentação da imagem)
+# Expõe a porta
 EXPOSE 80
 
 # Comando para iniciar o servidor FastAPI com Uvicorn
