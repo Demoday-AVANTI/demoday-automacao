@@ -1,11 +1,17 @@
 variable "cluster_name" {
-  default = "demo-cluster"
+  description = "The name for the EKS cluster"
+  default     = "demo-cluster"
+  type        = string
 }
 
 variable "aws_region" {
-  default = "us-east-1"
+  description = "The AWS region to deploy resources"
+  default     = "us-east-1"
+  type        = string
 }
 
 variable "vpc_cidr" {
-  default = "10.0.0.0/16"
+  description = "The CIDR block for the VPC"
+  default     = "10.0.0.0/16"
+  type        = string
 }

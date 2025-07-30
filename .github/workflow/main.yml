@@ -16,54 +16,68 @@ jobs:
     env:
       IMAGE_NAME: gaabs16/fastapi-weather
       IMAGE_TAG: 1.0.${{ github.run_id }}
+      CLUSTER_NAME: demo-cluster
+      AWS_REGION: us-east-1
 
     steps:
+    # Checkout
     - name: Checkout repo
       uses: actions/checkout@v3
 
+    # Setup Python
     - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
+    # Instala dependências
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    # Testes (se houver)
     - name: Run tests
       run: |
         echo "Aqui roda seus testes"
 
+    # Build Docker image
     - name: Build Docker image
       run: |
         docker build -t $IMAGE_NAME:$IMAGE_TAG -f docker/Dockerfile .
 
+    # Login Docker Hub
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    # Push image com tag única
     - name: Push Docker image with tag
       run: |
         docker push $IMAGE_NAME:$IMAGE_TAG
 
+    # Tag latest
     - name: Tag latest
       run: |
         docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
 
+    # Push latest
     - name: Push latest tag
       run: |
         docker push $IMAGE_NAME:latest
 
+    # Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
+    # Terraform Init
     - name: Terraform Init
       working-directory: ./terraform
       run: terraform init
 
+    # Terraform Apply (infra AWS + EKS)
     - name: Terraform Apply
       working-directory: ./terraform
       env:
@@ -71,11 +85,30 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: terraform apply -auto-approve
 
+    # Configura kubeconfig do EKS automaticamente
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Update kubeconfig
+      run: |
+        aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
+
+    # Instala kubectl
     - name: Set up kubectl
       uses: azure/setup-kubectl@v3
       with:
         version: 'latest'
 
+    # Atualiza imagem no deployment.yaml
+    - name: Update image tag in deployment
+      run: |
+        sed -i "s|image: gaabs16/fastapi-weather:.*|image: $IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yaml
+
+    # Faz o deploy no Kubernetes
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f k8s/deployment.yaml

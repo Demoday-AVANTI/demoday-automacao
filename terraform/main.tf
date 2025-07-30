@@ -18,13 +18,14 @@ module "vpc" {
 }
 
 module "eks" {
-  source          = "terraform-aws-modules/eks/aws"
-  version         = "20.8.4"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "21.0.5"
 
-  cluster_name    = var.cluster_name
+  name            = var.cluster_name
   cluster_version = "1.29"
-  subnet_ids      = module.vpc.private_subnets
-  vpc_id          = module.vpc.vpc_id
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
   eks_managed_node_groups = {
     default = {
@@ -39,8 +40,4 @@ module "eks" {
     Environment = "dev"
     Terraform   = "true"
   }
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_name
 }
