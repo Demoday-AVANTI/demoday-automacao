@@ -16,7 +16,7 @@ jobs:
     env:
       IMAGE_NAME: gaabs16/fastapi-weather
       IMAGE_TAG: 1.0.${{ github.run_id }}
-      CLUSTER_NAME: demo-cluster
+      CLUSTER_NAME: cluster
       AWS_REGION: us-east-1
 
     steps:

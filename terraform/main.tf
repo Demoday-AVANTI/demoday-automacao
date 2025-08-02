@@ -38,6 +38,8 @@ module "eks" {
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
+  # create_kms_key              = false
+  create_cloudwatch_log_group = false
 
   # Node Group
   eks_managed_node_groups = {
@@ -52,11 +54,14 @@ module "eks" {
 
       disk_size = 20
 
-      additional_iam_policies = [
-        "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
-        "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
-        "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-      ]
+      create_security_group = true
+
+      iam_role_additional_policies = {
+        AmazonEKSWorkerNodePolicy       = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        AmazonEKS_CNI_Policy            = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        CloudWatchAgentServerPolicy   = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+      }
     }
   }
 
