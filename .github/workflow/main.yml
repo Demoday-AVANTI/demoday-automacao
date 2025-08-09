@@ -20,7 +20,17 @@ jobs:
       AWS_REGION: us-east-1
 
     steps:
-    # Checkout
+    # Checar Secrets antes de tudo
+    - name: Check required secrets
+      run: |
+        for secret in DOCKER_USERNAME DOCKER_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+          if [ -z "${{ secrets[$secret] }}" ]; then
+            echo "ERRO: Secret $secret não configurado no GitHub."
+            exit 1
+          fi
+        done
+
+    # Checkout do repositório
     - name: Checkout repo
       uses: actions/checkout@v3
 
@@ -30,16 +40,17 @@ jobs:
       with:
         python-version: "3.11"
 
-    # Instala dependências
+    # Instalar dependências
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    # Testes (se houver)
+    # Rodar testes
     - name: Run tests
       run: |
-        echo "Aqui roda seus testes"
+        echo "Executando testes..."
+        # pytest tests/ || exit 1
 
     # Build Docker image
     - name: Build Docker image
@@ -57,13 +68,11 @@ jobs:
     - name: Push Docker image with tag
       run: docker push $IMAGE_NAME:$IMAGE_TAG
 
-    # Tag latest
-    - name: Tag latest
-      run: docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
-
-    # Push latest
+    # Tag latest e push
     - name: Push latest tag
-      run: docker push $IMAGE_NAME:latest
+      run: |
+        docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+        docker push $IMAGE_NAME:latest
 
     # Setup Terraform
     - name: Setup Terraform
@@ -82,7 +91,7 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       run: terraform apply -auto-approve
 
-    # Configura kubeconfig do EKS automaticamente
+    # Configurar credenciais AWS
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -90,21 +99,22 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
+    # Atualizar kubeconfig
     - name: Update kubeconfig
       run: aws eks --region $AWS_REGION update-kubeconfig --name $CLUSTER_NAME
 
-    # Instala kubectl
+    # Instalar kubectl
     - name: Set up kubectl
       uses: azure/setup-kubectl@v3
       with:
         version: latest
 
-    # Atualiza imagem no deployment.yaml
+    # Atualizar imagem no deployment.yaml
     - name: Update image tag in deployment
       run: |
         sed -i "s|image: gaabs16/fastapi-weather:.*|image: $IMAGE_NAME:$IMAGE_TAG|g" k8s/deployment.yaml
 
-    # Faz o deploy no Kubernetes
+    # Deploy no Kubernetes
     - name: Deploy to Kubernetes
       run: |
         kubectl apply -f k8s/deployment.yaml
