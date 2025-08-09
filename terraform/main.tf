@@ -67,6 +67,18 @@ module "eks" {
       ]
 
       attach_cluster_primary_security_group = true
+
+      enable_cluster_creator_admin_permissions = true
+
+      manage_aws_auth_configmap = true
+
+      map_users = [
+        {
+          userarn  = "arn:aws:iam::624876162061:user/eks-monitoramento"
+          username = "eks-monitoramento"
+          groups   = ["system:masters"]
+        }
+      ]
     }
   }
 

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: fastapi
-        image: gabs162/fastapi-weather:latest
+        image: gaabs16/fastapi-weather:1.0.123456
         ports:
         - containerPort: 80
         env:
