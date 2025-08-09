@@ -7,3 +7,6 @@ venv/
 *.tfstate
 *.tfstate.*
 requirements.txt
+terraform/aws-auth
+terraform/minikube-linux*
+terraform/*.zip
