@@ -23,12 +23,14 @@ jobs:
     # Checar Secrets antes de tudo
     - name: Check required secrets
       run: |
-        for secret in DOCKER_USERNAME DOCKER_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
-          if [ -z "${{ secrets[$secret] }}" ]; then
-            echo "ERRO: Secret $secret não configurado no GitHub."
+          if [ -z "${{ secrets.DOCKER_USERNAME }}" ] || \
+            [ -z "${{ secrets.DOCKER_PASSWORD }}" ] || \
+            [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ] || \
+            [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+            echo "ERRO: Secrets faltando."
             exit 1
           fi
-        done
+
 
     # Checkout do repositório
     - name: Checkout repo
